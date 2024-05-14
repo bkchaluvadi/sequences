@@ -13,8 +13,8 @@ stateDiagram-v2
         ComparePrintLayers --> ActivatePrintLayer
         ActivatePrintLayer --> ConfigureAxis
         ConfigureAxis --> GoToPosition
-        GoToPosition --> preHeat
-        preHeat --> SetInertGas
+        GoToPosition --> EnableHeat
+        EnableHeat --> SetInertGas
         SetInertGas --> StartReactant
         StartReactant --> StartPrecusor
         StartPrecusor --> RunGCode
@@ -23,7 +23,8 @@ stateDiagram-v2
         StopReactant --> MoveToZeroPosition
         MoveToZeroPosition --> CheckLayersProgress
         CheckLayersProgress --> StopInertGas
-        StopInertGas --> Complete
+        StopInertGas --> DisableHeat
+        DisableHeat --> Complete
     }
 
     Complete --> [*]
