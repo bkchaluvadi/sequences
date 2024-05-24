@@ -14,6 +14,7 @@ stateDiagram-v2
 
 ## Function block
 ``` bash
+
 TYPE MFCState :
 (
     Idle,           // Controller is idle, waiting for commands
@@ -24,6 +25,7 @@ TYPE MFCState :
 );
 END_TYPE
 
+-----------------------------------------------------------------------------------------------------------
 FUNCTION_BLOCK FB_MFCControl
 
 VAR_INPUT
@@ -95,6 +97,7 @@ END_CASE
 PROGRAM Main
 VAR
     MFCControl : FB_MFCControl; // Create an instance of the function block
+    CheckFlow : BOOL := FALSE;  // Variable to check if the flow rate has been achieved
 END_VAR
 
 // Set the initial parameters
@@ -119,6 +122,23 @@ WHILE TRUE DO
         // For example, you could stop the process, alert the user, etc.
         // Once the fault has been handled, you can reset the fault condition
         MFCControl.ResetFault := TRUE;
+    END_IF
+
+    // Check if the user wants to set the flow to 30 sccm
+    IF MFCControl.IsFlowAchieved AND MFCControl.DesiredFlow = 20.0 THEN
+        MFCControl.DesiredFlow := 30.0; // Set the desired flow to 30 sccm
+        MFCControl.WaitForFlow := FALSE; // Do not wait for the flow to stabilize
+        MFCControl.CommandSetFlow := TRUE; // Start the flow setting process
+    END_IF
+
+    // Check if the user wants to check if the flow rate has been achieved
+    IF CheckFlow THEN
+        IF MFCControl.IsFlowAchieved THEN
+            // The flow rate has been achieved, you can notify the user here
+        ELSE
+            // The flow rate has not been achieved yet, you can notify the user here
+        END_IF
+        CheckFlow := FALSE; // Reset the CheckFlow variable
     END_IF
 END_WHILE
 END_PROGRAM
