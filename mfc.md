@@ -54,10 +54,10 @@ CASE MFCControlState OF
         IF ResetFault THEN
             Fault := FALSE;
         END_IF
-        IsFlowAchieved := FALSE; // Reset IsFlowAchieved when setting flow
         IF NOT Fault AND CommandSetFlow THEN
             MFCControlState := MFCState.SettingFlow;
             StateTimer(IN := TRUE, PT := MaxTime);
+            IsFlowAchieved := FALSE; // Reset IsFlowAchieved when setting flow
         END_IF
 
     MFCState.SettingFlow:
