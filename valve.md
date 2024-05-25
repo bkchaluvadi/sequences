@@ -1,40 +1,33 @@
 ## State diagram
 ```mermaid
-stateDiagram
+stateDiagram-v2
     [*] --> Idle
-    Idle --> Opening: Command
-    Idle --> Closing: !Command
-    Opening --> Opened: Feedback
-    Opening --> Fault: StateTimer.Q
-    Closing --> Closed: !Feedback
-    Closing --> Fault: StateTimer.Q
+    Idle --> Opening : Command
+    Idle --> Closing : !Command
+    Opening --> Opened : Feedback
+    Opening --> Fault : StateTimer.Q
+    Closing --> Closed : !Feedback
+    Closing --> Fault : StateTimer.Q
     Opened --> Idle
     Closed --> Idle
-    Fault --> Idle: ResetFault
-    Fault --> [*]
+    Fault --> Idle : ResetFault
 ```
 
 ## Code
 ```bash
-FUNCTION_BLOCK FB_ValveControl
-VAR_INPUT
-    Command : BOOL;          // Command to open (TRUE) or close (FALSE) the valve
-    Feedback : BOOL;         // Feedback indicating the actual status of the valve
-    MaxTime : TIME := T#5S;  // Maximum allowed operation time (default 5 seconds)
-    ResetFault : BOOL := FALSE; // Command to reset fault condition
-END_VAR
+(* Enum Definition for States *)
+TYPE ValveState :
+(
+    Idle,
+    Opening,
+    Closing,
+    Opened,
+    Closed,
+    Fault
+);
+END_TYPE
+-------------------------------------------------------------------------------------------------------------------------------------
 
-VAR_OUTPUT
-    ValveOutput : BOOL;      // Digital output to control the valve
-    State : ValveState;      // Current state of the valve
-    Fault : BOOL;            // Fault status
-END_VAR
-
-VAR
-    StateTimer : TON;        // TON timer for operation time monitoring
-END_VAR
-
-// State Machine
 FUNCTION_BLOCK FB_ValveControl
 VAR_INPUT
     Command : BOOL;          // Command to open (TRUE) or close (FALSE) the valve
@@ -56,9 +49,6 @@ END_VAR
 // State Machine
 CASE State OF
     ValveState.Idle:
-        IF ResetFault THEN
-            Fault := FALSE;
-        END_IF
         IF Command THEN
             State := ValveState.Opening;
         ELSE
@@ -87,15 +77,19 @@ CASE State OF
         END_IF
 
     ValveState.Opened:
+		State := ValveState.Idle;
+	
     ValveState.Closed:
         State := ValveState.Idle;
 
     ValveState.Fault:
         Fault := TRUE;
-        IF ResetFault THEN
-            State := ValveState.Idle;
-            Fault := FALSE;
-        END_IF
+		// Reset Fault and State if ResetFault is TRUE
+		IF ResetFault THEN
+			Fault := FALSE;
+			State := ValveState.Idle;
+		END_IF
+
 END_CASE
 ```
 ## Usuage
