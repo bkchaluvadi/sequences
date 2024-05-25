@@ -44,7 +44,6 @@ VAR
     StateTimer : TON;                 // TON timer for operation time monitoring
 END_VAR
 
-
 // State Machine
 CASE MFCControlState OF
     MFCState.Idle:
