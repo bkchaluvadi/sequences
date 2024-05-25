@@ -91,50 +91,38 @@ END_CASE
 ```bash
 PROGRAM Main
 VAR
-    MFCControl : FB_MFCControl; // Create an instance of the function block
-    CheckFlow : BOOL := FALSE;  // Variable to check if the flow rate has been achieved
+    MFCControl : FB_MFCControl; // Instance of the MFCControl function block
+    OperationSuccessful : BOOL; // Flag to check if the first operation was successful
 END_VAR
 
-// Set the initial parameters
-MFCControl.DesiredFlow := 10.0; // Set the desired flow to 10 sccm
-MFCControl.MaxTime := T#2M; // Set the maximum time to wait for the flow to stabilize to 2 minutes
-MFCControl.CommandSetFlow := TRUE; // Start the flow setting process
+// Set the desired flow rate to 10 sccm
+MFCControl.DesiredFlow := 10.0;
+MFCControl.MaxTime := T#5M; // Set the maximum allowed time to 5 minutes
+MFCControl.CommandSetFlow := TRUE; // Command to set a new flow rate
 
-// Main control loop
-WHILE TRUE DO
-    MFCControl(); // Call the function block to update its state
-
-    // Check if the flow has been achieved
-    IF MFCControl.IsFlowAchieved THEN
-        // Flow has been achieved, set the next desired flow
-        MFCControl.DesiredFlow := 20.0; // Set the desired flow to 20 sccm
-        MFCControl.CommandSetFlow := TRUE; // Start the flow setting process
-    END_IF
-
-    // Check for faults
-    IF MFCControl.Fault THEN
-        // Handle the fault condition here
-        // For example, you could stop the process, alert the user, etc.
-        // Once the fault has been handled, you can reset the fault condition
-        MFCControl.ResetFault := TRUE;
-    END_IF
-
-    // Check if the user wants to set the flow to 30 sccm
-    IF MFCControl.IsFlowAchieved AND MFCControl.DesiredFlow = 20.0 THEN
-        MFCControl.DesiredFlow := 30.0; // Set the desired flow to 30 sccm
-        MFCControl.WaitForFlow := FALSE; // Do not wait for the flow to stabilize
-        MFCControl.CommandSetFlow := TRUE; // Start the flow setting process
-    END_IF
-
-    // Check if the user wants to check if the flow rate has been achieved
-    IF CheckFlow THEN
-        IF MFCControl.IsFlowAchieved THEN
-            // The flow rate has been achieved, you can notify the user here
-        ELSE
-            // The flow rate has not been achieved yet, you can notify the user here
-        END_IF
-        CheckFlow := FALSE; // Reset the CheckFlow variable
-    END_IF
+// Wait for the flow to reach the desired value
+WHILE MFCControl.MFCControlState <> MFCState.FlowAchieved AND MFCControl.MFCControlState <> MFCState.Fault DO
+    // Continue the program execution
+    MFCControl();
 END_WHILE
+
+// Check if the first operation was successful
+IF MFCControl.MFCControlState = MFCState.FlowAchieved THEN
+    OperationSuccessful := TRUE;
+ELSE
+    OperationSuccessful := FALSE;
+END_IF
+
+// If the first operation was successful, set the desired flow rate to 20 sccm
+IF OperationSuccessful THEN
+    MFCControl.DesiredFlow := 20.0;
+    MFCControl.CommandSetFlow := TRUE; // Command to set a new flow rate
+
+    // Wait for the flow to reach the desired value
+    WHILE MFCControl.MFCControlState <> MFCState.FlowAchieved AND MFCControl.MFCControlState <> MFCState.Fault DO
+        // Continue the program execution
+        MFCControl();
+    END_WHILE
+END_IF
 END_PROGRAM
 ```
