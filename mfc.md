@@ -2,14 +2,13 @@
 ```mermaid
 stateDiagram-v2
     [*] --> Idle
-    Idle --> SettingFlow : CommandSetFlow & !Fault
+    Idle --> SettingFlow : CommandSetFlow
     SettingFlow --> WaitingForFlow : WaitForFlow
     SettingFlow --> Idle : !WaitForFlow
     WaitingForFlow --> FlowAchieved : ABS(ActualFlow - DesiredFlow) <= FlowTolerance
     WaitingForFlow --> Fault : StateTimer.Q
     FlowAchieved --> Idle
     Fault --> Idle : ResetFault
-    Idle --> [*]
 ```
 
 ## Function block
@@ -24,7 +23,6 @@ TYPE MFCState :
     Fault           // An error or fault condition has been detected
 );
 END_TYPE
-
 -----------------------------------------------------------------------------------------------------------
 FUNCTION_BLOCK FB_MFCControl
 
@@ -48,13 +46,11 @@ VAR
     StateTimer : TON;                 // TON timer for operation time monitoring
 END_VAR
 
+
 // State Machine
 CASE MFCControlState OF
     MFCState.Idle:
-        IF ResetFault THEN
-            Fault := FALSE;
-        END_IF
-        IF NOT Fault AND CommandSetFlow THEN
+        IF CommandSetFlow THEN
             MFCControlState := MFCState.SettingFlow;
             StateTimer(IN := TRUE, PT := MaxTime);
             IsFlowAchieved := FALSE; // Reset IsFlowAchieved when setting flow
@@ -85,10 +81,11 @@ CASE MFCControlState OF
     MFCState.Fault:
         Fault := TRUE;
         IsFlowAchieved := FALSE;
+        // Reset Fault and State if ResetFault is TRUE
         IF ResetFault THEN
-            MFCControlState := MFCState.Idle;
             Fault := FALSE;
-        END_IF
+            MFCControlState := MFCState.Idle;
+END_IF
 END_CASE
 ```
 
