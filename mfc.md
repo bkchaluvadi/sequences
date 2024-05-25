@@ -13,7 +13,6 @@ stateDiagram-v2
 
 ## Function block
 ``` bash
-
 TYPE MFCState :
 (
     Idle,           // Controller is idle, waiting for commands
@@ -37,7 +36,6 @@ VAR_INPUT
 END_VAR
 
 VAR_OUTPUT
-    IsFlowAchieved : BOOL;            // Indicates if the desired flow has been achieved and stabilized
     MFCControlState : MFCState;       // Current state of the MFC control
     Fault : BOOL;                     // Fault status
 END_VAR
@@ -53,21 +51,21 @@ CASE MFCControlState OF
         IF CommandSetFlow THEN
             MFCControlState := MFCState.SettingFlow;
             StateTimer(IN := TRUE, PT := MaxTime);
-            IsFlowAchieved := FALSE; // Reset IsFlowAchieved when setting flow
+            CommandSetFlow := FALSE; // Reset CommandSetFlow after transitioning to SettingFlow state
         END_IF
 
     MFCState.SettingFlow:
         IF WaitForFlow THEN
             MFCControlState := MFCState.WaitingForFlow;
         ELSE
-            IsFlowAchieved := TRUE;
             MFCControlState := MFCState.Idle;
+            StateTimer(IN := FALSE); // Stop the timer if not waiting for flow
         END_IF
 
     MFCState.WaitingForFlow:
         IF ABS(ActualFlow - DesiredFlow) <= FlowTolerance THEN
-            IsFlowAchieved := TRUE;
             MFCControlState := MFCState.FlowAchieved;
+            StateTimer(IN := FALSE); // Stop the timer when flow is achieved
         ELSIF StateTimer.Q THEN
             StateTimer(IN := FALSE);
             Fault := TRUE;
@@ -80,12 +78,12 @@ CASE MFCControlState OF
 
     MFCState.Fault:
         Fault := TRUE;
-        IsFlowAchieved := FALSE;
         // Reset Fault and State if ResetFault is TRUE
         IF ResetFault THEN
             Fault := FALSE;
             MFCControlState := MFCState.Idle;
-END_IF
+            StateTimer(IN := FALSE); // Stop the timer when fault is reset
+        END_IF
 END_CASE
 ```
 
