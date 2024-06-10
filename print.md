@@ -20,9 +20,9 @@ stateDiagram-v2
         StartPrecusor --> RunGCode
         RunGCode --> StopPrecursor
         StopPrecursor --> StopReactant
-        StopReactant --> MoveToZeroPosition
-        MoveToZeroPosition --> CheckLayersProgress
-        CheckLayersProgress --> StopInertGas
+        StopReactant --> CheckLayersProgress 
+        CheckLayersProgress --> MoveToZeroPosition
+        MoveToZeroPosition --> StopInertGas
         StopInertGas --> DisableHeat
         DisableHeat --> Complete
     }
